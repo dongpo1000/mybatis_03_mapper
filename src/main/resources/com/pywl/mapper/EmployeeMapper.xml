@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--使用mapper接口-->
+<mapper namespace="com.pywl.mapper.EmployeeMapper">
+
+    <!--
+        根据 id 查询，未指定数据库类型就默认使用配置文件配置的
+        Employee selectByPrimaryId(Integer id);
+     -->
+    <select id="selectByPrimaryId" resultType="com.pywl.entity.Employee">
+        SELECT
+          id,
+          user_name userName,
+          gender,
+          email
+        FROM
+          tb_employee
+        WHERE
+          id = #{id}
+    </select>
+
+    <!--
+        根据 id 查询，指定数据库为 mysql
+        Employee selectByPrimaryId(Integer id);
+     -->
+    <select id="selectByPrimaryId" resultType="com.pywl.entity.Employee" databaseId="mysql">
+        SELECT
+          id,
+          user_name userName,
+          gender,
+          email
+        FROM
+          tb_employee
+        WHERE
+          id = #{id}
+    </select>
+
+    <!--
+        根据 id 查询，指定数据库为 oracle
+        Employee selectByPrimaryId(Integer id);
+     -->
+    <select id="selectByPrimaryId" resultType="com.pywl.entity.Employee" databaseId="oracle">
+        SELECT
+          EMPLOYEE_ID id,
+          LAST_NAME userName,
+          EAMIL email
+        FROM
+          employees
+        WHERE
+          EMPLOYEE_ID = #{id}
+    </select>
+
+    <!--
+        增加
+        Integer insert(Employee employee);
+
+        parameterType：参数类型，可以省略，
+	    获取自增主键的值：
+            mysql支持自增主键，自增主键值的获取，mybatis也是利用statement.getGenreatedKeys()；
+            useGeneratedKeys="true"；使用自增主键获取主键值策略
+            keyProperty；指定对应的主键属性，也就是mybatis获取到主键值以后，将这个值封装给javaBean的哪个属性
+    -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.pywl.entity.Employee">
+        INSERT INTO
+          tb_employee(user_name,gender,email)
+        VALUES
+          (#{userName},#{gender},#{email})
+    </insert>
+
+    <!--
+        增加，指定数据库为 oracle
+
+        Integer insert(Employee employee);
+        获取非自增主键的值：
+        Oracle不支持自增；Oracle使用序列来模拟自增；
+        每次插入的数据的主键是从序列中拿到的值；如何获取到这个值
+     -->
+    <insert id="insert" databaseId="oracle">
+        <!--
+            keyProperty:表示查出的主键值封装给javaBean的哪个属性
+            order="BEFORE":当前sql在插入sql之前运行
+                   AFTER：当前sql在插入sql之后运行
+            resultType:查出的数据的返回值类型
+
+            BEFORE运行顺序：
+                先运行selectKey查询id的sql；查出id值封装给javaBean的id属性
+                在运行插入的sql；就可以取出id属性对应的值
+            AFTER运行顺序：
+                先运行插入的sql（从序列中取出新值作为id）；
+                再运行selectKey查询id的sql；
+         -->
+        <selectKey keyProperty="id" order="BEFORE" resultType="Integer">
+            <!-- 编写查询主键的sql语句 -->
+            <!-- BEFORE-->
+            select EMPLOYEES_SEQ.nextval from dual
+            <!-- AFTER：
+             select EMPLOYEES_SEQ.currval from dual -->
+        </selectKey>
+
+        <!-- 插入时的主键是从序列中拿到的 -->
+        <!-- BEFORE:-->
+        INSERT INTO
+        employees(EMPLOYEE_ID,LAST_NAME,EMAIL)
+        VALUES
+        (#{id},#{lastName},#{email<!-- ,jdbcType=NULL -->})
+        <!-- AFTER：
+        insert into employees(EMPLOYEE_ID,LAST_NAME,EMAIL)
+        values(employees_seq.nextval,#{lastName},#{email}) -->
+    </insert>
+
+    <!--
+        根据 主键id 更新
+        Boolean updateByPrimaryKey(Employee employee);
+    -->
+    <update id="updateByPrimaryKey" parameterType="com.pywl.entity.Employee">
+        UPDATE
+          tb_employee
+        SET
+          user_name=#{userName},
+          gender=#{gender},
+          email=#{email}
+        WHERE
+          id=#{id}
+    </update>
+
+    <!--
+        根据 主键id 删除
+        void deleteByPrimaryKey(Integer id);
+    -->
+    <delete id="deleteByPrimaryKey" parameterType="Integer">
+        DELETE FROM
+          tb_employee
+        WHERE
+          id=#{id}
+    </delete>
+
+    <!--
+        根据用户名模糊查询
+        List<Employee> findLikeUserName(String userName);
+
+        resultType：如果返回的是一个集合，要写集合中元素的类型
+    -->
+    <select id="findLikeUserName" resultType="com.pywl.entity.Employee">
+        SELECT *
+        FROM tb_employee
+        WHERE user_name LIKE #{userName}
+    </select>
+
+    <!--
+        返回一条记录的map；key就是列名，值就是对应的值
+        Map<String, Object> findByPrimaryIdAndReturnMap(Integer id);
+    -->
+    <select id="findByPrimaryIdAndReturnMap" resultType="map">
+        SELECT *
+        FROM tb_employee
+        WHERE id=#{id}
+    </select>
+
+    <!--
+        根据 id 查询， 返回以 id 为键的map
+        Map<Integer, Employee> findByIdAndReturnMap(Integer id);
+    -->
+    <select id="findByIdAndReturnMap" resultType="com.pywl.entity.Employee">
+        SELECT *
+        FROM tb_employee
+        WHERE id=#{id}
+    </select>
+
+    <!--
+        根据 userName 模糊查询，返回以 userName 为键的 map
+        Map<String, Employee> findLikeUserNameAndReturnMap(String userName);
+    -->
+    <select id="findLikeUserNameAndReturnMap" resultType="com.pywl.entity.Employee">
+        SELECT *
+        FROM tb_employee
+        WHERE user_name LIKE #{userName}
+    </select>
+
+    <!--
+        根据 id 和用户名查询
+        Employee findByIdAndUserName(Integer id, String userName);
+    -->
+    <select id="findByIdAndUserName" resultType="com.pywl.entity.Employee">
+        SELECT *
+        FROM tb_employee
+        WHERE id=#{id} AND user_name=#{userName}
+    </select>
+
+    <!--
+        根据 map 查询
+        Employee findByMap(Map<String, Object> map);
+    -->
+    <select id="findByMap" resultType="com.pywl.entity.Employee">
+        SELECT *
+        FROM tb_employee
+        WHERE id=#{id} AND user_name=#{name}
+    </select>
+
+</mapper>

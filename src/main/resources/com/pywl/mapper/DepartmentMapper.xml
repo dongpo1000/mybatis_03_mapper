@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--使用mapper接口-->
+<mapper namespace="com.pywl.mapper.DepartmentMapper">
+
+    <!--
+        根据id查询
+        Department findByPrimaryId(Integer id);
+    -->
+    <select id="findByPrimaryId" resultType="com.pywl.entity.Department">
+        SELECT id,dept_name deptName
+        FROM tb_dept
+        WHERE id=#{id}
+    </select>
+
+
+    <!--嵌套结果集的方式，使用collection标签定义关联的集合类型的属性封装规则  -->
+    <resultMap id="MyMap" type="com.pywl.entity.Department">
+        <id column="id" property="id"/>
+        <result column="dept_name" property="deptName"/>
+
+        <!--
+            collection定义关联集合类型的属性的封装规则
+            ofType:指定集合里面元素的类型
+        -->
+        <collection property="emps" ofType="com.pywl.entity.Employee">
+            <!-- 定义这个集合中元素的封装规则 -->
+            <id column="eid" property="id"/>
+            <result column="user_name" property="userName"/>
+            <result column="gender" property="gender"/>
+            <result column="email" property="email"/>
+        </collection>
+    </resultMap>
+
+    <!--Department findByPrimaryIdIncludeEmps(Integer id);-->
+    <select id="findByPrimaryIdIncludeEmps" resultMap="MyMap">
+        SELECT d.*,e.id eid,e.user_name user_name, e.gender, e.email
+        FROM tb_dept d LEFT JOIN tb_employee e
+        ON d.id = e.d_id
+        WHERE d.id=#{id}
+    </select>
+
+
+    <resultMap id="MyMapStep" type="com.pywl.entity.Department">
+        <id column="id" property="id"/>
+        <result column="dept_name" property="deptName"/>
+        <!-- collection：分段查询 -->
+        <collection property="emps" ofType="com.pywl.entity.Employee"
+            select="com.pywl.mapper.EmployeeMapperPlus.findEmpsByDeptId"
+            column="id" fetchType="lazy"
+        />
+    </resultMap>
+
+    <!--Department findByPrimaryIdIncludeEmpsStep(Integer id);-->
+    <select id="findByPrimaryIdIncludeEmpsStep" resultMap="MyMapStep">
+        SELECT *
+        FROM tb_dept
+        WHERE id=#{id}
+    </select>
+
+    <!-- 扩展：多列的值传递过去：
+        将多列的值封装map传递；
+        column="{key1=column1,key2=column2}"
+        fetchType="lazy"：表示使用延迟加载；
+            - lazy：延迟
+            - eager：立即
+     -->
+
+
+</mapper>
